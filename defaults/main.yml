@@ -1,0 +1,12 @@
+---
+docker_hub_login: "aaa"
+docker_hub_password: "aaa"
+docker_cache_registry: "localhost:5000"
+docker_images_list:
+  - { state: "absent", name: "adminer", tag: "4.8.0-standalone" }
+
+
+docker_python_module:
+  - jmespath
+  - jsondiff
+  - docker

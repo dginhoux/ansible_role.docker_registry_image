@@ -1,0 +1,171 @@
+---
+- name: "{{ image.name }}:{{ image.tag }} check if already present in local registry"
+  uri:
+    url: http://{{ docker_cache_registry }}/v2/{{ image.name }}/tags/list
+    return_content: yes
+    timeout: 3
+    method: GET
+    validate_certs: no
+    status_code: [200,404]
+    use_proxy: no
+  register: registry_query
+  ignore_errors: "yes"
+  changed_when: image.tag not in registry_query.content
+
+
+- block: 
+    - name: "{{ image.name }}:{{ image.tag }} add: pull from external registry"
+      community.docker.docker_image:
+        name: "{{ image.name }}:{{ image.tag }}"
+        source: pull
+      ignore_errors: "yes"
+      register: pull_result
+    
+    - name: "{{ image.name }}:{{ image.tag }} add: re-tag and push in local registry"
+      community.docker.docker_image:
+        name: "{{ image.name }}"
+        repository: "{{ docker_cache_registry }}/{{ image.name }}:{{ image.tag }}"
+        tag: "{{ image.tag }}"
+        push: "yes"
+        source: local
+      ignore_errors: "yes"
+      register: retag_result
+      when: >
+        pull_result.failed is defined
+        and
+        not pull_result.failed | bool
+
+    - name: "pull | {{ image.name }}:{{ image.tag }} prune in docker node"
+      community.docker.docker_image:
+        state: absent
+        name: "{{ item }}"
+        tag: "{{ image.tag }}"
+      ignore_errors: "yes"
+      when: >
+        retag_result.failed is defined
+        and
+        not retag_result.failed | bool
+      with_items:
+        - "{{ image.name }}"
+        - "{{ docker_cache_registry }}/{{ image.name }}"
+
+    # - name: "pull | {{ image.name }}:{{ image.tag }} prune in docker node"
+    #   community.docker.docker_image:
+    #     state: absent
+    #     name: "{{ image.name }}"
+    #     tag: "{{ image.tag }}"
+    #   ignore_errors: "yes"
+    #   when: >
+    #     retag_result.failed is defined
+    #     and
+    #     not retag_result.failed | bool
+  when: 
+    registry_query is defined
+    and
+    registry_query.failed is false
+    and
+    image.tag not in registry_query.content
+    and
+    image.state == "present"
+
+
+- block:
+    - name: "{{ image.name }}:{{ image.tag }} remove: get digest in local registry"
+      shell: 
+        cmd: "curl -s -I -H 'Accept: application/vnd.docker.distribution.manifest.v2+json' http://{{ docker_cache_registry }}/v2/{{ image.name }}/manifests/{{ image.tag }} | awk '/^Docker-Content-Digest/ {print $2}'"
+      no_log: "true"
+      ignore_errors: "yes"
+      register: digest
+
+    - name: "{{ image.name }}:{{ image.tag }} remove: delete digest in local registry"
+      shell: 
+        cmd: "curl -X DELETE 'http://{{ docker_cache_registry }}/v2/{{ image.name }}/manifests/{{ digest.stdout }}'"
+      no_log: "true"
+      # register: delete
+      # uri:
+      #   url: "http://{{ docker_cache_registry }}/v2/{{ image.name }}/manifests/{{ digest.stdout }}"
+      #   return_content: yes
+      #   timeout: 3
+      #   method: DELETE
+      #   validate_certs: no
+      ignore_errors: "yes"
+      when: >
+        digest.rc == 0
+        and
+        digest.stdout != ""
+  when: 
+    registry_query is defined
+    and
+    registry_query.failed is false
+    and
+    image.tag in registry_query.content
+    and
+    image.state == "absent"
+
+
+# - name: "{{ image.name }}:{{ image.tag }} check if already present in local registry"
+#   shell: 
+#     cmd: "curl http://{{ docker_cache_registry }}/v2/{{ image.name }}/tags/list | grep {{ image.tag }}"
+#   no_log: "true"
+#   ignore_errors: "yes"
+#   register: is_already_present
+
+
+# - block: 
+#     - name: "{{ image.name }}:{{ image.tag }} pull from external registry"
+#       community.docker.docker_image:
+#         name: "{{ image.name }}:{{ image.tag }}"
+#         source: pull
+#       ignore_errors: "yes"
+#       register: pull_result
+    
+#     - name: "{{ image.name }}:{{ image.tag }} re-tag and push in local registry"
+#       community.docker.docker_image:
+#         name: "{{ image.name }}"
+#         repository: "{{ docker_cache_registry }}/{{ image.name }}:{{ image.tag }}"
+#         tag: "{{ image.tag }}"
+#         push: "yes"
+#         source: local
+#       ignore_errors: "yes"
+#       register: retag_result
+#       when: >
+#         pull_result.failed is defined
+#         and
+#         not pull_result.failed | bool
+
+#     # - name: "pull | {{ image.name }}:{{ image.tag }} prune in docker node"
+#     #   community.docker.docker_image:
+#     #     state: absent
+#     #     name: "{{ image.name }}"
+#     #     tag: "{{ image.tag }}"
+#     #   ignore_errors: "yes"
+#     #   when: >
+#     #     retag_result.failed is defined
+#     #     and
+#     #     not retag_result.failed | bool
+#   when: >
+#     is_already_present.rc != 0
+#     and
+#     image.state == "present"
+
+
+# - block:
+#     - name: "{{ image.name }}:{{ image.tag }} get digest in local registry"
+#       shell: "curl -s -I -H 'Accept: application/vnd.docker.distribution.manifest.v2+json' http://{{ docker_cache_registry }}/v2/{{ image.name }}/manifests/{{ image.tag }} | awk '/^Docker-Content-Digest/ {print $2}'"
+#       no_log: "true"
+#       ignore_errors: "yes"
+#       register: digest
+
+#     - name: "{{ image.name }}:{{ image.tag }} delete digest in local registry"
+#       shell: "curl -X DELETE 'http://{{ docker_cache_registry }}/v2/{{ image.name }}/manifests/{{ digest.stdout }}'"
+#       no_log: "true"
+#       ignore_errors: "yes"
+#       register: delete
+#       when: >
+#         digest.rc == 0
+#         and
+#         digest.stdout != ""
+#   when: >
+#     is_already_present.rc == 0
+#     and
+#     image.state == "absent"
