@@ -1,7 +1,7 @@
 ---
 
 galaxy_info:
-  role_name: ginhouxnet.docker_registry_image
+  role_name: docker_registry_image
   description: pull docker image, retag and push to a local registry
   author: dginhoux
   company: ginhouxnet
