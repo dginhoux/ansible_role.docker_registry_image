@@ -5,7 +5,7 @@ galaxy_info:
   description: pull docker image, retag and push to a local registry
   author: dginhoux
   company: ginhouxnet
-  license: MIT
+  license: BSD
   min_ansible_version: "2.12"
   platforms:
     - name: Debian
