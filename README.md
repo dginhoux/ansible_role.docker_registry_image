@@ -1,4 +1,4 @@
-ginhouxnet.docker_registry_image
+Ansible Role : dginhoux.docker_registry_image
 =========
 
 This ansible role is used to synchronize docker image from publics registries and push them in a local registry.
