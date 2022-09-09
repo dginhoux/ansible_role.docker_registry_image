@@ -13,8 +13,7 @@ This role is built to only run on platforms defined in `meta/main.yml`
 Role Variables
 --------------
 
-
-```
+```yaml
 docker_hub_login: "aaa"
 docker_hub_password: "aaa"
 
