@@ -1,8 +1,7 @@
 ginhouxnet.docker_registry_image
 =========
 
-This ansible role is used to synchronize docker image from public registries and push them in a local registry.
-Docker need to be installed on the node where this roles is running.
+This ansible role is used to synchronize docker image from publics registries and push them in a local registry.
 
 
 Requirements
@@ -29,7 +28,8 @@ docker_images_list:
 Dependencies
 ------------
 
-none
+Docker engine need to be installed on the node where this roles is running.
+
 
 Example Playbook
 ----------------
