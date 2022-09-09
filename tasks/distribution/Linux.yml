@@ -4,12 +4,10 @@
     name: "{{ item }}"
     state: present
   loop: "{{ docker_python_module | flatten }}"
-  # run_once: "yes"
-
+  # run_once: true
 
 - name: login to hub.docker.com
   shell: docker login --username "{{ docker_hub_login }}" --password "{{ docker_hub_password }}"
-
 
 - include_tasks:
     file: "tasks/sub-tasks/manage_image.yml"

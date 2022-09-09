@@ -1,5 +1,4 @@
 ---
-
 galaxy_info:
   role_name: docker_registry_image
   description: pull docker image, retag and push to a local registry
@@ -25,6 +24,5 @@ galaxy_info:
   galaxy_tags:
     - docker
     - registry
-    
 
 dependencies: []
