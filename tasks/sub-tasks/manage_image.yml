@@ -57,14 +57,14 @@
 
 - block:
     - name: "{{ image.name }}:{{ image.tag }} remove: get digest in local registry"
-      shell:
+      ansible.builtin.shell:
         cmd: "curl -s -I -H 'Accept: application/vnd.docker.distribution.manifest.v2+json' http://{{ docker_cache_registry }}/v2/{{ image.name }}/manifests/{{ image.tag }} | awk '/^Docker-Content-Digest/ {print $2}'"
       no_log: "true"
       ignore_errors: true
       register: digest
 
     - name: "{{ image.name }}:{{ image.tag }} remove: delete digest in local registry"
-      shell:
+      ansible.builtin.shell:
         cmd: "curl -X DELETE 'http://{{ docker_cache_registry }}/v2/{{ image.name }}/manifests/{{ digest.stdout }}'"
       no_log: "true"
       ignore_errors: true
