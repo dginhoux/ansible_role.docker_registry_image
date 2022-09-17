@@ -7,7 +7,8 @@
   # run_once: true
 
 - name: login to hub.docker.com
-  ansible.builtin.shell: docker login --username "{{ docker_hub_login }}" --password "{{ docker_hub_password }}"
+  ansible.builtin.shell:
+    cmd: docker login --username "{{ docker_hub_login }}" --password "{{ docker_hub_password }}"
 
 - ansible.builtin.include_tasks:
     file: "tasks/sub-tasks/manage_image.yml"

@@ -1,6 +1,6 @@
 ---
 - name: "{{ image.name }}:{{ image.tag }} check if already present in local registry"
-  uri:
+  ansible.builtin.uri:
     url: http://{{ docker_cache_registry }}/v2/{{ image.name }}/tags/list
     return_content: true
     timeout: 3
