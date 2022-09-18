@@ -1,5 +1,5 @@
 ---
-- name: "{{ image.name }}:{{ image.tag }} check if already present in local registry"
+- name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] {{ image.name }}:{{ image.tag }} check if already present in local registry"
   ansible.builtin.uri:
     url: http://{{ docker_cache_registry }}/v2/{{ image.name }}/tags/list
     return_content: true
@@ -13,14 +13,14 @@
   changed_when: image.tag not in registry_query.content
 
 - block:
-    - name: "{{ image.name }}:{{ image.tag }} add: pull from external registry"
+    - name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] {{ image.name }}:{{ image.tag }} add: pull from external registry"
       community.docker.docker_image:
         name: "{{ image.name }}:{{ image.tag }}"
         source: pull
       ignore_errors: true
       register: pull_result
 
-    - name: "{{ image.name }}:{{ image.tag }} add: re-tag and push in local registry"
+    - name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] {{ image.name }}:{{ image.tag }} add: re-tag and push in local registry"
       community.docker.docker_image:
         name: "{{ image.name }}"
         repository: "{{ docker_cache_registry }}/{{ image.name }}:{{ image.tag }}"
@@ -34,7 +34,7 @@
         and
         not pull_result.failed | bool
 
-    - name: "pull | {{ image.name }}:{{ image.tag }} prune in docker node"
+    - name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] pull | {{ image.name }}:{{ image.tag }} prune in docker node"
       community.docker.docker_image:
         state: absent
         name: "{{ item }}"
@@ -56,14 +56,14 @@
     image.state == "present"
 
 - block:
-    - name: "{{ image.name }}:{{ image.tag }} remove: get digest in local registry"
+    - name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] {{ image.name }}:{{ image.tag }} remove: get digest in local registry"
       ansible.builtin.shell:
         cmd: "curl -s -I -H 'Accept: application/vnd.docker.distribution.manifest.v2+json' http://{{ docker_cache_registry }}/v2/{{ image.name }}/manifests/{{ image.tag }} | awk '/^Docker-Content-Digest/ {print $2}'"
       no_log: "true"
       ignore_errors: true
       register: digest
 
-    - name: "{{ image.name }}:{{ image.tag }} remove: delete digest in local registry"
+    - name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] {{ image.name }}:{{ image.tag }} remove: delete digest in local registry"
       ansible.builtin.shell:
         cmd: "curl -X DELETE 'http://{{ docker_cache_registry }}/v2/{{ image.name }}/manifests/{{ digest.stdout }}'"
       no_log: "true"

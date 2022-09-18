@@ -10,9 +10,11 @@
   ansible.builtin.shell:
     cmd: docker login --username "{{ docker_hub_login }}" --password "{{ docker_hub_password }}"
 
-- ansible.builtin.include_tasks:
+- name: include tasks for image management
+  ansible.builtin.include_tasks:
     file: "tasks/sub-tasks/manage_image.yml"
   loop: "{{ docker_images_list | flatten }}"
   loop_control:
     loop_var: image
+    extended: yes
   when: docker_images_list is iterable
