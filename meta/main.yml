@@ -1,7 +1,8 @@
 ---
 galaxy_info:
   role_name: docker_registry_image
-  description: dginhoux.docker_registry_image
+  description: |
+    This ansible role is used to synchronize docker image from publics registries and push them in a local registry.
   author: Dany GINHOUX
   company: dginhoux
   license: MIT
