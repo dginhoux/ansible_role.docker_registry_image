@@ -73,20 +73,7 @@ docker_images_list:
   - { state: "absent", name: "adminer", tag: "4.8.0" }
   - { state: "present", name: "redis", tag: "6.2.8" }
   - { state: "present", name: "mariadb", tag: "10.5" }
-
-docker_python_module:
-  - jmespath
-  - jsondiff
-  - docker
-
 ```
-
-#### DEFAULT OS SPECIFIC VARIABLES
-
-Those variables files are located in `vars/*.yml` are used to handle OS differences.<br />
-One of theses is loaded dynamically during role runtime using the `include_vars` module and set OS specifics variable's.
-
-`NOT USED BY THIS ROLE`
 
 
 ## AUTHOR
