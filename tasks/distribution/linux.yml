@@ -16,5 +16,8 @@
   loop: "{{ docker_images_list | flatten }}"
   loop_control:
     loop_var: image
+    # label:
+    #   - "{{ image.name }}:{{ image.tag }}"
+    #   - "{{ image.state }}"
     extended: yes
   when: docker_images_list is iterable
