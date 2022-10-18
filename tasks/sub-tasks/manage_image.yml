@@ -1,81 +1,124 @@
 ---
-- name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] {{ image.name }}:{{ image.tag }} check if already present in local registry"
-  ansible.builtin.uri:
-    url: http://{{ docker_cache_registry }}/v2/{{ image.name }}/tags/list
-    return_content: true
-    timeout: 3
-    method: GET
-    validate_certs: false
-    status_code: [200, 404]
-    use_proxy: false
-  register: registry_query
-  ignore_errors: true
-  changed_when: image.tag not in registry_query.content
 
-- block:
-    - name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] {{ image.name }}:{{ image.tag }} add: pull from external registry"
-      community.docker.docker_image:
-        name: "{{ image.name }}:{{ image.tag }}"
-        source: pull
-      ignore_errors: true
-      register: pull_result
+- name: remote registry login for {{ image.name }}
+  ansible.builtin.shell:
+    cmd: docker login --username "{{ image.remote_registry_login }}" --password "{{ image.remote_registry_password }}" {{ image.remote_registry_url | default('') }}
+  when: >
+    image.remote_registry_login is defined
+    and
+    image.remote_registry_login != ""
+    and
+    image.remote_registry_password is defined
+    and
+    image.remote_registry_password != ""
 
-    - name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] {{ image.name }}:{{ image.tag }} add: re-tag and push in local registry"
-      community.docker.docker_image:
-        name: "{{ image.name }}"
-        repository: "{{ docker_cache_registry }}/{{ image.name }}:{{ image.tag }}"
-        tag: "{{ image.tag }}"
-        push: "yes"
-        source: local
-      ignore_errors: true
-      register: retag_result
-      when: >
-        pull_result.failed is defined
-        and
-        not pull_result.failed | bool
+- name: include tasks for remove tags marked as absent for {{ image.name }}
+  # debug:
+  #   msg: "remove {{ image.name }} : {{ tag }}"
+  ansible.builtin.include_tasks:
+    file: "tasks/sub-tasks/tags_absent.yml"
+  loop: "{{ image.tags_absent | flatten }}"
+  loop_control:
+    loop_var: tag
 
-    - name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] pull | {{ image.name }}:{{ image.tag }} prune in docker node"
-      community.docker.docker_image:
-        state: absent
-        name: "{{ item }}"
-        tag: "{{ image.tag }}"
-      ignore_errors: true
-      when: >
-        retag_result.failed is defined
-        and
-        not retag_result.failed | bool
-      with_items:
-        - "{{ image.name }}"
-        - "{{ docker_cache_registry }}/{{ image.name }}"
-  when: registry_query is defined
-    and
-    registry_query.failed is false
-    and
-    image.tag not in registry_query.content
-    and
-    image.state == "present"
+- name: include tasks for sync tags marked as present for {{ image.name }}
+  # debug:
+  #   msg: "sync {{ image.name }} : {{ tag }}"
+  ansible.builtin.include_tasks:
+    file: "tasks/sub-tasks/tags_present.yml"
+  loop: "{{ image.tags_present | flatten }}"
+  loop_control:
+    loop_var: tag
 
-- block:
-    - name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] {{ image.name }}:{{ image.tag }} remove: get digest in local registry"
-      ansible.builtin.shell:
-        cmd: "curl -s -I -H 'Accept: application/vnd.docker.distribution.manifest.v2+json' http://{{ docker_cache_registry }}/v2/{{ image.name }}/manifests/{{ image.tag }} | awk '/^Docker-Content-Digest/ {print $2}'"
-      no_log: "true"
-      ignore_errors: true
-      register: digest
+# - name: registry logout
+#   ansible.builtin.shell:
+#     cmd: docker logout {{ image.remote_registry_url | default('') }}
+#   when: >
+#     image.remote_registry_login is defined
+#     and
+#     image.remote_registry_login != ""
+#     and
+#     image.remote_registry_password is defined
+#     and
+#     image.remote_registry_password != ""
 
-    - name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] {{ image.name }}:{{ image.tag }} remove: delete digest in local registry"
-      ansible.builtin.shell:
-        cmd: "curl -X DELETE 'http://{{ docker_cache_registry }}/v2/{{ image.name }}/manifests/{{ digest.stdout }}'"
-      no_log: "true"
-      ignore_errors: true
-      when: >
-        digest.rc == 0
-        and
-        digest.stdout != ""
-  when: registry_query is defined
-    and
-    registry_query.failed is false
-    and
-    image.tag in registry_query.content
-    and
-    image.state == "absent"
+# - name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] {{ image.name }}:{{ image.tag }} check if already present in local registry"
+#   ansible.builtin.uri:
+#     url: http://{{ docker_cache_registry }}/v2/{{ image.name }}/tags/list
+#     return_content: true
+#     timeout: 3
+#     method: GET
+#     validate_certs: false
+#     status_code: [200, 404]
+#     use_proxy: false
+#   register: registry_query
+#   ignore_errors: true
+#   changed_when: image.tag not in registry_query.content
+
+# - block:
+#     - name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] {{ image.name }}:{{ image.tag }} add: pull from external registry"
+#       community.docker.docker_image:
+#         name: "{{ image.name }}:{{ image.tag }}"
+#         source: pull
+#       ignore_errors: true
+#       register: pull_result
+
+#     - name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] {{ image.name }}:{{ image.tag }} add: re-tag and push in local registry"
+#       community.docker.docker_image:
+#         name: "{{ image.name }}"
+#         repository: "{{ docker_cache_registry }}/{{ image.name }}:{{ image.tag }}"
+#         tag: "{{ image.tag }}"
+#         push: "yes"
+#         source: local
+#       ignore_errors: true
+#       register: retag_result
+#       when: >
+#         pull_result.failed is defined
+#         and
+#         not pull_result.failed | bool
+
+#     - name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] pull | {{ image.name }}:{{ image.tag }} prune in docker node"
+#       community.docker.docker_image:
+#         state: absent
+#         name: "{{ item }}"
+#         tag: "{{ image.tag }}"
+#       ignore_errors: true
+#       when: >
+#         retag_result.failed is defined
+#         and
+#         not retag_result.failed | bool
+#       with_items:
+#         - "{{ image.name }}"
+#         - "{{ docker_cache_registry }}/{{ image.name }}"
+#   when: registry_query is defined
+#     and
+#     registry_query.failed is false
+#     and
+#     image.tag not in registry_query.content
+#     and
+#     image.state == "present"
+
+# - block:
+#     - name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] {{ image.name }}:{{ image.tag }} remove: get digest in local registry"
+#       ansible.builtin.shell:
+#         cmd: "curl -s -I -H 'Accept: application/vnd.docker.distribution.manifest.v2+json' http://{{ docker_cache_registry }}/v2/{{ image.name }}/manifests/{{ image.tag }} | awk '/^Docker-Content-Digest/ {print $2}'"
+#       no_log: "true"
+#       ignore_errors: true
+#       register: digest
+
+#     - name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] {{ image.name }}:{{ image.tag }} remove: delete digest in local registry"
+#       ansible.builtin.shell:
+#         cmd: "curl -X DELETE 'http://{{ docker_cache_registry }}/v2/{{ image.name }}/manifests/{{ digest.stdout }}'"
+#       no_log: "true"
+#       ignore_errors: true
+#       when: >
+#         digest.rc == 0
+#         and
+#         digest.stdout != ""
+#   when: registry_query is defined
+#     and
+#     registry_query.failed is false
+#     and
+#     image.tag in registry_query.content
+#     and
+#     image.state == "absent"

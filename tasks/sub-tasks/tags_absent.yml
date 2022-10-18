@@ -1,0 +1,24 @@
+---
+
+- block:
+    - name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] {{ image.name }}:{{ tag }} remove: get digest in local registry"
+      ansible.builtin.shell:
+        cmd: "curl -s -I -H 'Accept: application/vnd.docker.distribution.manifest.v2+json' http://{{ docker_cache_registry }}/v2/{{ image.name }}/manifests/{{ tag }} | awk '/^Docker-Content-Digest/ {print $2}'"
+      no_log: "true"
+      ignore_errors: true
+      register: digest
+
+    - name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] {{ image.name }}:{{ tag }} remove: delete digest in local registry"
+      ansible.builtin.shell:
+        cmd: "curl -X DELETE 'http://{{ docker_cache_registry }}/v2/{{ image.name }}/manifests/{{ digest.stdout }}'"
+      no_log: "true"
+      ignore_errors: true
+      when: >
+        digest.rc == 0
+        and
+        digest.stdout != ""
+  when: registry_query is defined
+    and
+    registry_query.failed is false
+    and
+    tag in registry_query.content

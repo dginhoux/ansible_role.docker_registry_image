@@ -6,9 +6,9 @@
   loop: "{{ docker_python_module | flatten }}"
   # run_once: true
 
-- name: login to hub.docker.com
-  ansible.builtin.shell:
-    cmd: docker login --username "{{ docker_hub_login }}" --password "{{ docker_hub_password }}"
+# - name: login to hub.docker.com
+#   ansible.builtin.shell:
+#     cmd: docker login --username "{{ docker_hub_login }}" --password "{{ docker_hub_password }}"
 
 - name: include tasks for image management
   ansible.builtin.include_tasks:

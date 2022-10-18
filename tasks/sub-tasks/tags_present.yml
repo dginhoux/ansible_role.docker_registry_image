@@ -1,0 +1,55 @@
+---
+
+- name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] {{ image.name }}:{{ tag }} check if already present in local registry"
+  ansible.builtin.uri:
+    url: http://{{ docker_cache_registry }}/v2/{{ image.name }}/tags/list
+    return_content: true
+    timeout: 3
+    method: GET
+    validate_certs: false
+    status_code: [ 200, 404 ]
+    use_proxy: false
+  register: registry_query
+  ignore_errors: true
+  changed_when: tag not in registry_query.content
+
+- block:
+    - name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] {{ image.name }}:{{ tag }} add: pull from external registry"
+      community.docker.docker_image:
+        name: "{{ image.name }}:{{ tag }}"
+        source: pull
+      ignore_errors: true
+      register: pull_result
+
+    - name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] {{ image.name }}:{{ tag }} add: re-tag and push in local registry"
+      community.docker.docker_image:
+        name: "{{ image.name }}"
+        repository: "{{ docker_cache_registry }}/{{ image.name }}:{{ tag }}"
+        tag: "{{ tag }}"
+        push: "yes"
+        source: local
+      ignore_errors: true
+      register: retag_result
+      when: >
+        pull_result.failed is defined
+        and
+        not pull_result.failed | bool
+
+    - name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] pull | {{ image.name }}:{{ tag }} prune in docker node"
+      community.docker.docker_image:
+        state: absent
+        name: "{{ item }}"
+        tag: "{{ tag }}"
+      ignore_errors: true
+      when: >
+        retag_result.failed is defined
+        and
+        not retag_result.failed | bool
+      with_items:
+        - "{{ image.name }}"
+        - "{{ docker_cache_registry }}/{{ image.name }}"
+  when: registry_query is defined
+    and
+    registry_query.failed is false
+    and
+    tag not in registry_query.content
