@@ -1,0 +1,44 @@
+---
+# - name: "- {{ image.name }} - get tags already present in local cache registry"
+#   ansible.builtin.uri:
+#     url: "{{ image.cache_registry_scheme | default(docker_default_cache_registry_scheme) }}://{{ image.cache_registry_url | default(docker_default_cache_registry_url) }}/v2/{{ image.name }}/tags/list"
+#     return_content: true
+#     timeout: 3
+#     method: GET
+#     validate_certs: false
+#     status_code: [200, 404]
+#     use_proxy: false
+#   register: registry_query
+#   ignore_errors: true
+#   changed_when: >
+#     registry_query is defined
+#     and
+#     registry_query.content != ""
+
+# - name: "- {{ image.name }} - get tags already present in local cache registry"
+#   ansible.builtin.shell:
+#     cmd: /usr/bin/python3 /opt/registry_cli/registry.py --help
+#   register: registry_query
+#   # ignore_errors: true
+#   # changed_when: >
+#   #   registry_query is defined
+#   #   and
+#   #   registry_query.content != ""
+
+- name: "- {{ image.name }} - get tags already present in local cache registry"
+  ansible.builtin.shell:
+    cmd: "{{ docker_registry_cli_path }}/registry.py --host {{ image.cache_registry_scheme | default(docker_default_cache_registry_scheme) }}://{{ image.cache_registry_url | default(docker_default_cache_registry_url) }} --no-validate-ssl --image {{ image.name }}"
+  register: registry_query
+  ignore_errors: true
+  changed_when: >
+    registry_query is defined
+    and
+    registry_query.stdout != ""
+
+- name: "- {{ image.name }} - list tags already present in local cache registry"
+  ansible.builtin.debug:
+    msg: "{{ registry_query.stdout }}"
+  when: >
+    registry_query is defined
+    and
+    registry_query.stdout != ""

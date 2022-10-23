@@ -1,55 +1,43 @@
 ---
+## {% if image.remote_registry_url is defined %}{{ image.remote_registry_url }}/{% endif %}
+# {% if  docker_default_retag_keep_remote_registry_name  and  image.retag_keep_remote_registry_name %}
+# {{ image.remote_registry_url | default(docker_default_remote_registry_url) }}/
+# {% elif  not docker_default_retag_keep_remote_registry_name  and  image.retag_keep_remote_registry_name %}
+# {{ image.remote_registry_url | default(docker_default_remote_registry_url) }}/
+# {% endif %}
 
-- name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] {{ image.name }}:{{ tag }} check if already present in local registry"
-  ansible.builtin.uri:
-    url: http://{{ docker_cache_registry }}/v2/{{ image.name }}/tags/list
-    return_content: true
-    timeout: 3
-    method: GET
-    validate_certs: false
-    status_code: [ 200, 404 ]
-    use_proxy: false
-  register: registry_query
+- name: "- {{ image.name }}:{{ tag }} - pull from external registry"
+  community.docker.docker_image:
+    name: "{{ image.remote_registry_url | default(docker_default_remote_registry_url) }}/{{ image.name }}:{{ tag }}"
+    source: pull
   ignore_errors: true
-  changed_when: tag not in registry_query.content
+  register: pull_result
 
-- block:
-    - name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] {{ image.name }}:{{ tag }} add: pull from external registry"
-      community.docker.docker_image:
-        name: "{{ image.name }}:{{ tag }}"
-        source: pull
-      ignore_errors: true
-      register: pull_result
-
-    - name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] {{ image.name }}:{{ tag }} add: re-tag and push in local registry"
-      community.docker.docker_image:
-        name: "{{ image.name }}"
-        repository: "{{ docker_cache_registry }}/{{ image.name }}:{{ tag }}"
-        tag: "{{ tag }}"
-        push: "yes"
-        source: local
-      ignore_errors: true
-      register: retag_result
-      when: >
-        pull_result.failed is defined
-        and
-        not pull_result.failed | bool
-
-    - name: "[{{ ansible_loop.index }}/{{ ansible_loop.length }}] pull | {{ image.name }}:{{ tag }} prune in docker node"
-      community.docker.docker_image:
-        state: absent
-        name: "{{ item }}"
-        tag: "{{ tag }}"
-      ignore_errors: true
-      when: >
-        retag_result.failed is defined
-        and
-        not retag_result.failed | bool
-      with_items:
-        - "{{ image.name }}"
-        - "{{ docker_cache_registry }}/{{ image.name }}"
-  when: registry_query is defined
+- name: "- {{ image.name }}:{{ tag }} - retag and push in local cache registry"
+  community.docker.docker_image:
+    name: "{{ image.remote_registry_url | default(docker_default_remote_registry_url) }}/{{ image.name }}"
+    repository: "{{ image.cache_registry_url | default(docker_default_cache_registry_url) }}/{{ image.name }}:{{ tag }}"
+    tag: "{{ tag }}"
+    push: "yes"
+    source: local
+  ignore_errors: true
+  register: retag_result
+  when: >
+    pull_result.failed is defined
     and
-    registry_query.failed is false
+    not pull_result.failed | bool
+
+- name: "- {{ image.name }}:{{ tag }} - prune on local docker node"
+  community.docker.docker_image:
+    state: absent
+    name: "{{ item }}"
+    tag: "{{ tag }}"
+  ignore_errors: true
+  when: >
+    retag_result.failed is defined
     and
-    tag not in registry_query.content
+    not retag_result.failed | bool
+  with_items:
+    - "{{ image.name }}"
+    - "{{ image.remote_registry_url | default(docker_default_remote_registry_url) }}/{{ image.name }}"
+    - "{{ image.cache_registry_url | default(docker_default_cache_registry_url) }}/{{ image.name }}"

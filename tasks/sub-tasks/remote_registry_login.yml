@@ -1,0 +1,16 @@
+---
+- name: "- {% if image.remote_registry_url is defined %}{{ image.remote_registry_url }}/{% endif %}{{ image.name }} - remote registry login"
+  ansible.builtin.shell:
+    cmd: >-
+      docker login 
+      --username "{{ image.remote_registry_login | default(docker_default_remote_registry_login) }}" 
+      --password "{{ image.remote_registry_password | default(docker_default_remote_registry_password) }}" 
+      {{ image.remote_registry_url | default(docker_default_remote_registry_url) }}
+  when: >
+    image.remote_registry_auth is defined  and  image.remote_registry_auth | bool
+    or
+    (
+      image.remote_registry_auth is not defined
+      and
+      docker_default_remote_registry_auth is defined  and  docker_default_remote_registry_auth | bool
+    )

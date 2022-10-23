@@ -1,36 +1,78 @@
 ---
+- name: "- {{ image.name }}"
+  block: 
 
-- name: remote registry login for {{ image.name }}
-  ansible.builtin.shell:
-    cmd: docker login --username "{{ image.remote_registry_login }}" --password "{{ image.remote_registry_password }}" {{ image.remote_registry_url | default('') }}
+    - name: "- {{ image.name }} - include tasks for local cache registry login"
+      ansible.builtin.include_tasks:
+        file: "tasks/sub-tasks/local_cache_registry_login.yml.yml"
+
+    - name: "- {{ image.name }} - include tasks for remote registry login"
+      ansible.builtin.include_tasks:
+        file: "tasks/sub-tasks/remote_registry_login.yml.yml"
+      when: >
+        image.tags_present is defined
+        and
+        image.tags_present is iterable 
+        and
+        image.tags_present | length > 0
+
+    - name: "- {{ image.name }} - include tasks for local cache registry query"
+      ansible.builtin.include_tasks:
+        file: "tasks/sub-tasks/local_cache_registry_query.yml"
+
+    - name: "- {{ image.name }} - include tasks for remove tags marked as absent"
+      ansible.builtin.include_tasks:
+        file: "tasks/sub-tasks/tags_absent.yml"
+      when: >
+        registry_query is defined
+        and
+        registry_query.failed is false
+        and
+        tag | string in registry_query.stdout | string 
+        and
+        image.tags_absent is defined
+        and
+        image.tags_absent is iterable 
+        and
+        image.tags_absent | length > 0
+      loop: "{{ image.tags_absent | flatten }}"
+      loop_control:
+        loop_var: tag
+
+    - name: "- {{ image.name }} - include tasks for remove tags marked as present"
+      ansible.builtin.include_tasks:
+        file: "tasks/sub-tasks/tags_present.yml"
+      when: >
+        registry_query is defined
+        and
+        registry_query.failed is false
+        and
+        tag | string not in registry_query.stdout | string 
+        and
+        image.tags_present is defined
+        and
+        image.tags_present is iterable 
+        and
+        image.tags_present | length > 0
+      loop: "{{ image.tags_present | flatten }}"
+      loop_control:
+        loop_var: tag
+
   when: >
-    image.remote_registry_login is defined
-    and
-    image.remote_registry_login != ""
-    and
-    image.remote_registry_password is defined
-    and
-    image.remote_registry_password != ""
+    (
+      image.tags_absent is defined
+      and
+      image.tags_absent is iterable
+    )
+    or
+    (
+      image.tags_present is defined
+      and
+      image.tags_present is iterable
+    )
 
-- name: include tasks for remove tags marked as absent for {{ image.name }}
-  # debug:
-  #   msg: "remove {{ image.name }} : {{ tag }}"
-  ansible.builtin.include_tasks:
-    file: "tasks/sub-tasks/tags_absent.yml"
-  loop: "{{ image.tags_absent | flatten }}"
-  loop_control:
-    loop_var: tag
 
-- name: include tasks for sync tags marked as present for {{ image.name }}
-  # debug:
-  #   msg: "sync {{ image.name }} : {{ tag }}"
-  ansible.builtin.include_tasks:
-    file: "tasks/sub-tasks/tags_present.yml"
-  loop: "{{ image.tags_present | flatten }}"
-  loop_control:
-    loop_var: tag
-
-# - name: registry logout
+# - name: "{{ image.name }} remote registry logout"
 #   ansible.builtin.shell:
 #     cmd: docker logout {{ image.remote_registry_url | default('') }}
 #   when: >
