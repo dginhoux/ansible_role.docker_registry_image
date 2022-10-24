@@ -5,8 +5,10 @@
 ## DESCRIPTION
 
 This ansible role is used to synchronize docker image from publics registries and push them in a local registry.
-
-
+<br />
+Authentification is supported.
+<br />
+It use an external tools, already included (in `files/`) with this role : https://github.com/andrey-pohilko/registry-cli
 
 ## REQUIREMENTS
 
@@ -123,7 +125,6 @@ docker_images_list:
     tags_present: [ 9.2.0, 9.2.1 ]
 
 
-
 docker_python_module:
   - jmespath
   - jsondiff
@@ -135,8 +136,8 @@ docker_python_module:
 
 Dany GINHOUX - https://github.com/dginhoux
 
-
-
 ## LICENSE
 
 MIT
+<br />
+Refer to https://github.com/andrey-pohilko/registry-cli for registry-cli license
