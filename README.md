@@ -66,13 +66,68 @@ git clone https://github.com/dginhoux/ansible_role.docker_registry_image dginhou
 Defaults variables defined in `defaults/main.yml` : 
 
 ```yaml
-docker_hub_login: "aaa"
-docker_hub_password: "aaa"
-docker_cache_registry: "localhost:5000"
+
+## external tools necessary for manage registry from cli
+## this role cannot be used without
+## https://github.com/andrey-pohilko/registry-cli#garbage-collection-in-docker-registry
+docker_registry_cli_install: true
+docker_registry_cli_path: /opt/registry_cli
+
+
+docker_default_remote_registry_auth: true
+docker_default_remote_registry_scheme: https
+docker_default_remote_registry_url: docker.io
+docker_default_remote_registry_login: aaa
+docker_default_remote_registry_password: qqq
+
+
+docker_default_cache_registry_auth: false
+docker_default_cache_registry_scheme: http
+docker_default_cache_registry_url: registry-cache.infra.ginhoux.net:5000
+docker_default_cache_registry_login: ""
+docker_default_cache_registry_password: ""
+
+
 docker_images_list:
-  - { state: "absent", name: "adminer", tag: "4.8.0" }
-  - { state: "present", name: "redis", tag: "6.2.8" }
-  - { state: "present", name: "mariadb", tag: "10.5" }
+  # - name: aaa
+  #   remote_registry_auth: true
+  #   remote_registry_scheme: https
+  #   remote_registry_url: 
+  #   remote_registry_login: 
+  #   remote_registry_password: @
+  #   cache_registry_auth: false
+  #   cache_registry_scheme: http
+  #   cache_registry_url: 
+  #   cache_registry_login: 
+  #   cache_registry_password: 
+  #   tags_absent: [ ]
+  #   tags_present: [ ]
+
+  - name: authelia/authelia
+    tags_absent: [ 4.36.4, 4.36.5, 4.36.6 ]
+    tags_present: [ 4.36.7, 4.36.8 ]
+
+  - name: caddy
+    tags_absent: [ 2.4.0-alpine, 2.4.3-alpine, 2.4.5-alpine, 2.4.6-alpine ]
+    tags_present: [ 2.5.1-alpine, 2.5.2-alpine, 2.6.0-alpine, 2.6.1-alpine, 2.6.2-alpine ]
+
+  - name: cadvisor/cadvisor
+    remote_registry_auth: false
+    remote_registry_scheme: https
+    remote_registry_url: gcr.io
+    tags_absent: [ v0.39.0, v0.40.0 ]
+    tags_present: [ v0.45.0 ]
+
+  - name: grafana/grafana
+    tags_absent: [ 9.1.6, 9.1.7, 9.1.8 ]
+    tags_present: [ 9.2.0, 9.2.1 ]
+
+
+
+docker_python_module:
+  - jmespath
+  - jsondiff
+  - docker
 ```
 
 
