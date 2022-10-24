@@ -1,4 +1,5 @@
 ---
+
 ## {% if image.remote_registry_url is defined %}{{ image.remote_registry_url }}/{% endif %}
 # {% if  docker_default_retag_keep_remote_registry_name  and  image.retag_keep_remote_registry_name %}
 # {{ image.remote_registry_url | default(docker_default_remote_registry_url) }}/

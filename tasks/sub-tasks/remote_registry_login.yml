@@ -1,5 +1,5 @@
 ---
-- name: "- {% if image.remote_registry_url is defined %}{{ image.remote_registry_url }}/{% endif %}{{ image.name }} - remote registry login"
+- name: "- {{ image.name }} - remote registry login"
   ansible.builtin.shell:
     cmd: >-
       docker login 

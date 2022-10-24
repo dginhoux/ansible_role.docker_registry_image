@@ -6,9 +6,9 @@
     state: present
   loop: "{{ docker_python_module | flatten }}"
 
-- name: "include tasks for setup registry-cli"
+- name: "include tasks for install registry-cli"
   ansible.builtin.include_tasks:
-    file: "tasks/sub-tasks/install_registry_cli.yml"
+    file: "tasks/sub-tasks/registry_cli_install.yml"
   when: docker_registry_cli_install | bool
 
 - name: include tasks for image management
@@ -17,10 +17,6 @@
   loop: "{{ docker_images_list | flatten }}"
   loop_control:
     loop_var: image
-    # label:
-    #   - "{{ image.name }}:{{ image.tag }}"
-    #   - "{{ image.state }}"
-    extended: yes
   when: docker_images_list is iterable
 
 - name: registry logout
