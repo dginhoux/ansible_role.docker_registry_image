@@ -7,18 +7,18 @@
 # {{ image.remote_registry_url | default(docker_default_remote_registry_url) }}/
 # {% endif %}
 
-- name: "- {{ image.name }}:{{ tag }} - pull from external registry"
+- name: "- {{ image.name }}:{{ tag | string }} - pull from external registry"
   community.docker.docker_image:
-    name: "{{ image.remote_registry_url | default(docker_default_remote_registry_url) }}/{{ image.name }}:{{ tag }}"
+    name: "{{ image.remote_registry_url | default(docker_default_remote_registry_url) }}/{{ image.name }}:{{ tag | string }}"
     source: pull
   ignore_errors: true
   register: pull_result
 
-- name: "- {{ image.name }}:{{ tag }} - retag and push in local cache registry"
+- name: "- {{ image.name }}:{{ tag | string }} - retag and push in local cache registry"
   community.docker.docker_image:
     name: "{{ image.remote_registry_url | default(docker_default_remote_registry_url) }}/{{ image.name }}"
-    repository: "{{ image.cache_registry_url | default(docker_default_cache_registry_url) }}/{{ image.name }}:{{ tag }}"
-    tag: "{{ tag }}"
+    repository: "{{ image.cache_registry_url | default(docker_default_cache_registry_url) }}/{{ image.name }}:{{ tag | string }}"
+    tag: "{{ tag | string }}"
     push: "yes"
     source: local
   ignore_errors: true
@@ -28,11 +28,11 @@
     and
     not pull_result.failed | bool
 
-- name: "- {{ image.name }}:{{ tag }} - prune on local docker node"
+- name: "- {{ image.name }}:{{ tag | string }} - prune on local docker node"
   community.docker.docker_image:
     state: absent
     name: "{{ item }}"
-    tag: "{{ tag }}"
+    tag: "{{ tag | string }}"
   ignore_errors: true
   when: >
     retag_result.failed is defined

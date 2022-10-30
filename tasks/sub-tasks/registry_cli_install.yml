@@ -10,21 +10,14 @@
 
 - name: registry-cli deploy
   ansible.builtin.copy:
-    src: "files/{{ item }}"
+    src: "files/{{ item.file }}"
     dest: "{{ docker_registry_cli_path }}"
     owner: root
     group: root
-    mode: "0644"
+    mode: "{{ item.mode }}"
   with_items:
-    - registry.py
-    - requirements-build.txt
-
-- name: registry-cli set permissions
-  ansible.builtin.file:
-    path: "{{ docker_registry_cli_path }}/registry.py"
-    owner: root
-    group: root
-    mode: "0755"
+    - { file: registry.py, mode: "0755" }
+    - { file: requirements-build.txt, mode: "0644" }
 
 - name: registry-cli install python requirements
   ansible.builtin.pip:

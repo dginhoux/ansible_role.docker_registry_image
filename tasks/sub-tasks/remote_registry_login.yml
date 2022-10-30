@@ -1,4 +1,5 @@
 ---
+
 - name: "- {{ image.name }} - remote registry login"
   ansible.builtin.shell:
     cmd: >-
@@ -6,11 +7,59 @@
       --username "{{ image.remote_registry_login | default(docker_default_remote_registry_login) }}" 
       --password "{{ image.remote_registry_password | default(docker_default_remote_registry_password) }}" 
       {{ image.remote_registry_url | default(docker_default_remote_registry_url) }}
+  register: __remote_registry_login__auth_result
   when: >
-    image.remote_registry_auth is defined  and  image.remote_registry_auth | bool
-    or
     (
-      image.remote_registry_auth is not defined
-      and
-      docker_default_remote_registry_auth is defined  and  docker_default_remote_registry_auth | bool
+      image.remote_registry_auth is defined  and  image.remote_registry_auth | bool
+      or
+      (
+        image.remote_registry_auth is not defined
+        and
+        docker_default_remote_registry_auth is defined  and  docker_default_remote_registry_auth | bool
+      )
     )
+
+
+#     and
+#     (
+#       (
+#         __last__remote_registry_login is defined
+#         and
+#         __last__remote_registry_login != image.remote_registry_login | default(docker_default_remote_registry_login)
+#       )
+#       or
+#       __last__remote_registry_login is not defined
+#     )
+#     and
+#     (
+#       (
+#         __last__remote_registry_password is defined
+#         and
+#         __last__remote_registry_password != image.remote_registry_password | default(docker_default_remote_registry_password)
+#       )
+#       or
+#       __last__remote_registry_password is not defined
+#     )
+#     and
+#     (
+#       (
+#         __last__remote_registry_url is defined
+#         and
+#         __last__remote_registry_url != image.remote_registry_url | default(docker_default_remote_registry_url)
+#       )
+#       or
+#       __last__remote_registry_url is not defined
+#     )
+    
+
+# - name: "- {{ image.name }} - remote registry login remember"
+#   ansible.builtin.set_fact:
+#     __last__remote_registry_login: "{{ image.remote_registry_login | default(docker_default_remote_registry_login) }}"
+#     __last__remote_registry_password: "{{ image.remote_registry_password | default(docker_default_remote_registry_password) }}"
+#     __last__remote_registry_url: "{{ image.remote_registry_url | default(docker_default_remote_registry_url) }}"
+#   when: >
+#     __remote_registry_login__auth_result is defined
+#     and
+#     __remote_registry_login__auth_result.rc is defined
+#     and
+#     __remote_registry_login__auth_result.rc == 0
