@@ -16,7 +16,6 @@
 #     and
 #     digest.stdout != ""
 
-- name: "- {{ image.name }}:{{ tag | string }} - delete in local cache registry"
+- name: "Delete in local cache registry : {{ image.name }}:{{ tag | string }}"
   ansible.builtin.shell:
     cmd: "{{ docker_registry_cli_path }}/registry.py --host {{ image.cache_registry_scheme | default(docker_default_cache_registry_scheme) }}://{{ image.cache_registry_url | default(docker_default_cache_registry_url) }} --no-validate-ssl --image {{ image.name }} --delete-all --tags-like {{ tag | string }} --num 1"
-

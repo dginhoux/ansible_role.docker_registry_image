@@ -1,17 +1,17 @@
 ---
 
-- name: install required python modules
+- name: Install required python modules
   ansible.builtin.pip:
     name: "{{ item }}"
     state: present
   loop: "{{ docker_python_module | flatten }}"
 
-- name: "include tasks for install registry-cli"
+- name: "Include tasks for install registry-cli"
   ansible.builtin.include_tasks:
     file: "tasks/sub-tasks/registry_cli_install.yml"
   when: docker_registry_cli_install | bool
 
-- name: include tasks for image management
+- name: Include tasks for image management
   ansible.builtin.include_tasks:
     file: "tasks/sub-tasks/manage_image.yml"
   loop: "{{ docker_images_list | flatten }}"
@@ -19,6 +19,6 @@
     loop_var: image
   when: docker_images_list is iterable
 
-- name: registry logout
+- name: Registry logout
   ansible.builtin.shell:
     cmd: docker logout

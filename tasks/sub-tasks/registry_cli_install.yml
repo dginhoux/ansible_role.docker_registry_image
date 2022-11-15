@@ -1,6 +1,6 @@
 ---
 
-- name: registry-cli create folder
+- name: Registry-cli create folder
   ansible.builtin.file:
     path: "{{ docker_registry_cli_path }}"
     state: directory
@@ -8,7 +8,7 @@
     owner: root
     group: root
 
-- name: registry-cli deploy
+- name: Registry-cli deploy
   ansible.builtin.copy:
     src: "files/{{ item.file }}"
     dest: "{{ docker_registry_cli_path }}"
@@ -19,6 +19,6 @@
     - { file: registry.py, mode: "0755" }
     - { file: requirements-build.txt, mode: "0644" }
 
-- name: registry-cli install python requirements
+- name: Registry-cli install python requirements
   ansible.builtin.pip:
     requirements: "{{ docker_registry_cli_path }}/requirements-build.txt"

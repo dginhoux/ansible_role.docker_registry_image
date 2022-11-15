@@ -1,11 +1,11 @@
 ---
 
-- name: "- {{ image.name }} - remote registry login"
+- name: "Remote registry login : {{ image.name }}"
   ansible.builtin.shell:
     cmd: >-
-      docker login 
-      --username "{{ image.remote_registry_login | default(docker_default_remote_registry_login) }}" 
-      --password "{{ image.remote_registry_password | default(docker_default_remote_registry_password) }}" 
+      docker login
+      --username "{{ image.remote_registry_login | default(docker_default_remote_registry_login) }}"
+      --password "{{ image.remote_registry_password | default(docker_default_remote_registry_password) }}"
       {{ image.remote_registry_url | default(docker_default_remote_registry_url) }}
   register: __remote_registry_login__auth_result
   when: >
@@ -50,7 +50,7 @@
 #       or
 #       __last__remote_registry_url is not defined
 #     )
-    
+
 
 # - name: "- {{ image.name }} - remote registry login remember"
 #   ansible.builtin.set_fact:
