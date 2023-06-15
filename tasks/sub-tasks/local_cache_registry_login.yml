@@ -1,6 +1,6 @@
 ---
 - name: "Cache registry login : {{ image.name }}"
-  ansible.builtin.shell:
+  ansible.builtin.command:
     cmd: >-
       docker login
       --username "{{ image.cache_registry_login | default(docker_default_cache_registry_login) }}"

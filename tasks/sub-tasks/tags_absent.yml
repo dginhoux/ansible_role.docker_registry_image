@@ -1,13 +1,13 @@
 ---
 # - name: "- {{ image.name }}:{{ tag }} - get digest in local cache registry"
-#   ansible.builtin.shell:
+#   ansible.builtin.command:
 #     cmd: "curl -s -I -H 'Accept: application/vnd.docker.distribution.manifest.v2+json' {{ image.cache_registry_scheme | default(docker_default_cache_registry_scheme) }}://{{ image.cache_registry_url | default(docker_default_cache_registry_url) }}/v2/{{ image.name }}/manifests/{{ tag }} | awk '/^Docker-Content-Digest/ {print $2}'"
 #   # no_log: true
 #   ignore_errors: true
 #   register: digest
 
 # - name: "- {{ image.name }}:{{ tag }} - delete digest in local cache registry"
-#   ansible.builtin.shell:
+#   ansible.builtin.command:
 #     cmd: "curl -X DELETE '{{ image.cache_registry_scheme | default(docker_default_cache_registry_scheme) }}://{{ image.cache_registry_url | default(docker_default_cache_registry_url) }}/v2/{{ image.name }}/manifests/{{ digest.stdout }}'"
 #   # no_log: true
 #   ignore_errors: true
@@ -17,5 +17,5 @@
 #     digest.stdout != ""
 
 - name: "Delete in local cache registry : {{ image.name }}:{{ tag | string }}"
-  ansible.builtin.shell:
+  ansible.builtin.command:
     cmd: "{{ docker_registry_cli_path }}/registry.py --host {{ image.cache_registry_scheme | default(docker_default_cache_registry_scheme) }}://{{ image.cache_registry_url | default(docker_default_cache_registry_url) }} --no-validate-ssl --image {{ image.name }} --delete-all --tags-like {{ tag | string }} --num 1"

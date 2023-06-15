@@ -28,5 +28,5 @@
 - name: Registry logout
   tags:
     - sync
-  ansible.builtin.shell:
+  ansible.builtin.command:
     cmd: docker logout

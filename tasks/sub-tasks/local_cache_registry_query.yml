@@ -16,7 +16,7 @@
 #     registry_query.content != ""
 
 # - name: "- {{ image.name }} - get tags already present in local cache registry"
-#   ansible.builtin.shell:
+#   ansible.builtin.command:
 #     cmd: /usr/bin/python3 /opt/registry_cli/registry.py --help
 #   register: registry_query
 #   # ignore_errors: true
@@ -26,7 +26,7 @@
 #   #   registry_query.content != ""
 
 - name: "Get tags already present in local cache registry : {{ image.name }}"
-  ansible.builtin.shell:
+  ansible.builtin.command:
     cmd: "{{ docker_registry_cli_path }}/registry.py --host {{ image.cache_registry_scheme | default(docker_default_cache_registry_scheme) }}://{{ image.cache_registry_url | default(docker_default_cache_registry_url) }} --no-validate-ssl --image {{ image.name }}"
   register: registry_query
   ignore_errors: true
