@@ -5,12 +5,16 @@
       image.tags_absent is defined
       and
       image.tags_absent is iterable
+      and
+      image.tags_absent | length > 0
     )
     or
     (
       image.tags_present is defined
       and
       image.tags_present is iterable
+      and
+      image.tags_present | length > 0
     )
   block:
     - name: "Include tasks for local cache registry query : {{ image.name }}"
@@ -22,72 +26,56 @@
         file: "tasks/sub-tasks/local_cache_registry_login.yml"
 
     - name: "Find if remote registry login is needed and create flag : {{ image.name }}"
-      ansible.builtin.set_fact:
-        __login_to_remote_registry_needed: true
+      when:
+        - registry_query is defined
+        - not registry_query.failed
+        - tag not in registry_query.stdout
+        # - image.tags_present is defined
+        # - image.tags_present is iterable
+        # - image.tags_present | length > 0
       loop: "{{ image.tags_present | flatten }}"
       loop_control:
         loop_var: tag
-      when: >
-        registry_query is defined
-        and
-        registry_query.failed is false
-        and
-        tag | string not in registry_query.stdout | string
-        and
-        image.tags_present is defined
-        and
-        image.tags_present is iterable
-        and
-        image.tags_present | length > 0
+      ansible.builtin.set_fact:
+        __login_to_remote_registry_needed: true
 
     # - debug:
     #     var: __login_to_remote_registry_needed
 
     - name: "Include tasks for remote registry login : {{ image.name }}"
+      when:
+        - __login_to_remote_registry_needed is defined
+        - __login_to_remote_registry_needed
       ansible.builtin.include_tasks:
         file: "tasks/sub-tasks/remote_registry_login.yml"
-      when: >
-        __login_to_remote_registry_needed is defined
-        and
-        __login_to_remote_registry_needed | bool
 
     - name: "Include tasks for remove tags marked as absent : {{ image.name }}"
-      ansible.builtin.include_tasks:
-        file: "tasks/sub-tasks/tags_absent.yml"
+      when:
+        - registry_query is defined
+        - not registry_query.failed
+        - tag in registry_query.stdout
+        # - image.tags_absent is defined
+        # - image.tags_absent is iterable
+        # - image.tags_absent | length > 0
       loop: "{{ image.tags_absent | flatten }}"
       loop_control:
         loop_var: tag
-      when: >
-        registry_query is defined
-        and
-        registry_query.failed is false
-        and
-        tag | string in registry_query.stdout | string
-        and
-        image.tags_absent is defined
-        and
-        image.tags_absent is iterable
-        and
-        image.tags_absent | length > 0
+      ansible.builtin.include_tasks:
+        file: "tasks/sub-tasks/tags_absent.yml"
 
     - name: "Include tasks for add tags marked as present : {{ image.name }}"
-      ansible.builtin.include_tasks:
-        file: "tasks/sub-tasks/tags_present.yml"
+      when:
+        - registry_query is defined
+        - not registry_query.failed
+        - tag not in registry_query.stdout
+        # - image.tags_present is defined
+        # - image.tags_present is iterable
+        # - image.tags_present | length > 0
       loop: "{{ image.tags_present | flatten }}"
       loop_control:
         loop_var: tag
-      when: >
-        registry_query is defined
-        and
-        registry_query.failed is false
-        and
-        tag | string not in registry_query.stdout | string
-        and
-        image.tags_present is defined
-        and
-        image.tags_present is iterable
-        and
-        image.tags_present | length > 0
+      ansible.builtin.include_tasks:
+        file: "tasks/sub-tasks/tags_present.yml"
 
     - name: "Clear flag remote registry login is needed : {{ image.name }}"
       ansible.builtin.set_fact:

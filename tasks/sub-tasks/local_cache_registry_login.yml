@@ -1,16 +1,16 @@
 ---
 - name: "Cache registry login : {{ image.name }}"
+  when: >
+    image.cache_registry_auth is defined  and  image.cache_registry_auth
+    or
+    (
+      image.cache_registry_auth is not defined
+      and
+      docker_default_cache_registry_auth is defined  and  docker_default_cache_registry_auth
+    )
   ansible.builtin.command:
     cmd: >-
       docker login
       --username "{{ image.cache_registry_login | default(docker_default_cache_registry_login) }}"
       --password "{{ image.cache_registry_password | default(docker_default_cache_registry_password) }}"
       {{ image.cache_registry_url | default(docker_default_cache_registry_url) }}
-  when: >
-    image.cache_registry_auth is defined  and  image.cache_registry_auth | bool
-    or
-    (
-      image.cache_registry_auth is not defined
-      and
-      docker_default_cache_registry_auth is defined  and  docker_default_cache_registry_auth | bool
-    )

@@ -7,38 +7,36 @@
 # {{ image.remote_registry_url | default(docker_default_remote_registry_url) }}/
 # {% endif %}
 
-- name: "Pull from external registry : {{ image.name }}:{{ tag | string }}"
+- name: "Pull from external registry : {{ image.name }}:{{ tag }}"
+  register: pull_result
+  ignore_errors: true
   community.docker.docker_image:
     name: "{{ image.remote_registry_url | default(docker_default_remote_registry_url) }}/{{ image.name }}:{{ tag | string }}"
     source: pull
-  ignore_errors: true
-  register: pull_result
 
-- name: "Retag and push in local cache registry : {{ image.name }}:{{ tag | string }}"
+- name: "Retag and push in local cache registry : {{ image.name }}:{{ tag }}"
+  when:
+    - pull_result.failed is defined
+    - not pull_result.failed
+  register: retag_result
+  ignore_errors: true
   community.docker.docker_image:
     name: "{{ image.remote_registry_url | default(docker_default_remote_registry_url) }}/{{ image.name }}"
     repository: "{{ image.cache_registry_url | default(docker_default_cache_registry_url) }}/{{ image.name }}:{{ tag | string }}"
     tag: "{{ tag | string }}"
     push: "yes"
     source: local
-  ignore_errors: true
-  register: retag_result
-  when: >
-    pull_result.failed is defined
-    and
-    not pull_result.failed | bool
 
-- name: "Prune on local docker node : {{ image.name }}:{{ tag | string }}"
-  community.docker.docker_image:
-    state: absent
-    name: "{{ item }}"
-    tag: "{{ tag | string }}"
-  ignore_errors: true
-  when: >
-    retag_result.failed is defined
-    and
-    not retag_result.failed | bool
+- name: "Prune on local docker node : {{ image.name }}:{{ tag }}"
+  when:
+    - retag_result.failed is defined
+    - not retag_result.failed
   with_items:
     - "{{ image.name }}"
     - "{{ image.remote_registry_url | default(docker_default_remote_registry_url) }}/{{ image.name }}"
     - "{{ image.cache_registry_url | default(docker_default_cache_registry_url) }}/{{ image.name }}"
+  ignore_errors: true
+  community.docker.docker_image:
+    state: absent
+    name: "{{ item }}"
+    tag: "{{ tag }}"

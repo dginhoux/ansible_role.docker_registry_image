@@ -26,19 +26,18 @@
 #   #   registry_query.content != ""
 
 - name: "Get tags already present in local cache registry : {{ image.name }}"
-  ansible.builtin.command:
-    cmd: "{{ docker_registry_cli_path }}/registry.py --host {{ image.cache_registry_scheme | default(docker_default_cache_registry_scheme) }}://{{ image.cache_registry_url | default(docker_default_cache_registry_url) }} --no-validate-ssl --image {{ image.name }}"
+  changed_when:
+    - registry_query is defined
+    - registry_query.stdout != ""
   register: registry_query
   ignore_errors: true
-  changed_when: >
-    registry_query is defined
-    and
-    registry_query.stdout != ""
+  ansible.builtin.command:
+    cmd: "{{ docker_registry_cli_path }}/registry.py --host {{ image.cache_registry_scheme | default(docker_default_cache_registry_scheme) }}://{{ image.cache_registry_url | default(docker_default_cache_registry_url) }} --no-validate-ssl --plain --image {{ image.name }}"
+    #  | sed 's/^{{ image.name }}://g'
 
 - name: "List tags already present in local cache registry : {{ image.name }}"
+  when:
+    - registry_query is defined
+    - registry_query.stdout_lines != ""
   ansible.builtin.debug:
-    msg: "{{ registry_query.stdout }}"
-  when: >
-    registry_query is defined
-    and
-    registry_query.stdout != ""
+    msg: "{{ registry_query.stdout_lines | list }}"
