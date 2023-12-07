@@ -14,16 +14,12 @@ It use an external tools, already included (in `files/`) with this role : https:
 
 #### SUPPORTED PLATFORMS
 
-This role is tested on the following platforms.<br />
-
 | Platform | Versions |
 |----------|----------|
-| Debian | buster, bullseye, bookworm |
-| Fedora | 33, 34, 35, 36, 37, 38 |
-| EL | 7, 8 |
-
-You can set this variable `check_compatibility` to let the role skip nodes with unsupporteds platforms to avoid any compatibility problems.<br />
-
+| Debian | all |
+| EL | all |
+| Fedora | all |
+| Ubuntu | all |
 
 #### ANSIBLE VERSION
 
