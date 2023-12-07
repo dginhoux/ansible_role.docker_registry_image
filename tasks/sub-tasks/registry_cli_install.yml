@@ -20,5 +20,9 @@
     mode: "{{ item.mode }}"
 
 - name: Registry-cli install python requirements
+  loop: "{{ docker_registry_cli_pip_modules_list | flatten }}"
   ansible.builtin.pip:
-    requirements: "{{ docker_registry_cli_path }}/requirements-build.txt"
+    name: "{{ item }}"
+    state: present
+    # requirements: "{{ docker_registry_cli_path }}/requirements-build.txt"
+  

@@ -32,8 +32,7 @@
   register: registry_query
   ignore_errors: true
   ansible.builtin.command:
-    cmd: "{{ docker_registry_cli_path }}/registry.py --host {{ image.cache_registry_scheme | default(docker_default_cache_registry_scheme) }}://{{ image.cache_registry_url | default(docker_default_cache_registry_url) }} --no-validate-ssl --plain --image {{ image.name }}"
-    #  | sed 's/^{{ image.name }}://g'
+    cmd: "{{ docker_registry_cli_interpreter_python }} {{ docker_registry_cli_path }}/registry.py --host {{ image.cache_registry_scheme | default(docker_default_cache_registry_scheme) }}://{{ image.cache_registry_url | default(docker_default_cache_registry_url) }} --no-validate-ssl --plain --image {{ image.name }}"
 
 - name: "List tags already present in local cache registry : {{ image.name }}"
   when:
