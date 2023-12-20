@@ -51,7 +51,7 @@ git clone https://github.com/dginhoux/ansible_role.docker_registry_image dginhou
 
 ```yaml
 - hosts: all
-  roles:
+  tasks:
     - name: start role dginhoux.docker_registry_image
       ansible.builtin.include_role:
         name: dginhoux.docker_registry_image
@@ -62,7 +62,9 @@ git clone https://github.com/dginhoux/ansible_role.docker_registry_image dginhou
 
 #### DEFAULT VARIABLES
 
-Defaults variables defined in `defaults/main.yml` : 
+Defaults variables defined in `defaults/main.yml`
+
+#### EXAMPLES VARIABLES
 
 ```yaml
 
