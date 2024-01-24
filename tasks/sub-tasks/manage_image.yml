@@ -33,7 +33,7 @@
         # - image.tags_present is defined
         # - image.tags_present is iterable
         # - image.tags_present | length > 0
-      loop: "{{ image.tags_present | flatten }}"
+      loop: "{{ image.tags_present | default([]) | flatten }}"
       loop_control:
         loop_var: tag
       ansible.builtin.set_fact:
@@ -57,7 +57,7 @@
         # - image.tags_absent is defined
         # - image.tags_absent is iterable
         # - image.tags_absent | length > 0
-      loop: "{{ image.tags_absent | flatten }}"
+      loop: "{{ image.tags_absent | default([]) | flatten }}"
       loop_control:
         loop_var: tag
       ansible.builtin.include_tasks:
@@ -71,7 +71,7 @@
         # - image.tags_present is defined
         # - image.tags_present is iterable
         # - image.tags_present | length > 0
-      loop: "{{ image.tags_present | flatten }}"
+      loop: "{{ image.tags_present | default([]) | flatten }}"
       loop_control:
         loop_var: tag
       ansible.builtin.include_tasks:
