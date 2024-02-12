@@ -13,6 +13,8 @@
   community.docker.docker_image:
     name: "{{ image.remote_registry_url | default(docker_default_remote_registry_url) }}/{{ image.name }}:{{ tag | string }}"
     source: pull
+    # pull:
+    #   platform: linux/amd64
 
 - name: "Retag and push in local cache registry : {{ image.name }}:{{ tag }}"
   when:
@@ -24,7 +26,7 @@
     name: "{{ image.remote_registry_url | default(docker_default_remote_registry_url) }}/{{ image.name }}"
     repository: "{{ image.cache_registry_url | default(docker_default_cache_registry_url) }}/{{ image.name }}:{{ tag | string }}"
     tag: "{{ tag | string }}"
-    push: "yes"
+    push: true
     source: local
 
 - name: "Prune on local docker node : {{ image.name }}:{{ tag }}"
