@@ -5,7 +5,7 @@
 ## https://github.com/andrey-pohilko/registry-cli#garbage-collection-in-docker-registry
 docker_registry_cli_install: true
 docker_registry_cli_path: /opt/registry_cli
-docker_registry_cli_interpreter_python: "{{ discovered_interpreter_python }}"
+docker_registry_cli_interpreter_python: "{{ ansible_python_interpreter }}"
 docker_registry_cli_pip_modules_list:
   - certifi
   - chardet
