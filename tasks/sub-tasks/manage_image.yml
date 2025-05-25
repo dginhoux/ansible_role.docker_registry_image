@@ -54,9 +54,9 @@
         - registry_query is defined
         - not registry_query.failed
         - tag in registry_query.stdout
-        # - image.tags_absent is defined
-        # - image.tags_absent is iterable
-        # - image.tags_absent | length > 0
+        - image.tags_absent is defined
+        - image.tags_absent is iterable
+        - image.tags_absent | length > 0
       loop: "{{ image.tags_absent | default([]) | flatten }}"
       loop_control:
         loop_var: tag
@@ -68,9 +68,9 @@
         - registry_query is defined
         - not registry_query.failed
         - tag not in registry_query.stdout
-        # - image.tags_present is defined
-        # - image.tags_present is iterable
-        # - image.tags_present | length > 0
+        - image.tags_present is defined
+        - image.tags_present is iterable
+        - image.tags_present | length > 0
       loop: "{{ image.tags_present | default([]) | flatten }}"
       loop_control:
         loop_var: tag
