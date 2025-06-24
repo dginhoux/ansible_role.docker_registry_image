@@ -24,5 +24,6 @@
   ansible.builtin.pip:
     name: "{{ item }}"
     state: present
+    break_system_packages: True
     # requirements: "{{ docker_registry_cli_path }}/requirements-build.txt"
   
