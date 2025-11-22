@@ -178,9 +178,10 @@ def get_auth_schemes(r,path):
         if DEBUG:
             print('[debug][docker] Auth schemes found:{0}'.format([m for m in oauth]))
         return [m.lower() for m in oauth]
-    if DEBUG:
-        print('[debug][docker] No Auth schemes found')
-    return []
+    else:
+        if DEBUG:
+            print('[debug][docker] No Auth schemes found')
+        return []
 
 # class to manipulate registry
 class Registry:
@@ -264,20 +265,11 @@ class Registry:
         return None
 
     def list_images(self):
-        images = []
-        last = ""
-        # loop through all pages and get 10 records every time
-        while True:
-            result = self.send('/v2/_catalog?n=10&last=' + last)
-            if result is None:
-                return images
-            repos = json.loads(result.text)['repositories']
-            if len(repos) == 0:
-                break
-            images += repos
-            last = repos[-1]
+        result = self.send('/v2/_catalog?n=10000')
+        if result is None:
+            return []
 
-        return images
+        return json.loads(result.text)['repositories']
 
     def list_tags(self, image_name):
         result = self.send("/v2/{0}/tags/list".format(image_name))
@@ -372,7 +364,10 @@ class Registry:
         if json_result['schemaVersion'] == 1:
             print("Docker schemaVersion 1 isn't supported for deleting by age now")
             sys.exit(1)
-        return json_result['config']
+        else:
+            tag_config = json_result['config']
+
+        return tag_config
 
     def get_image_age(self, image_name, image_config):
         container_header = {"Accept": "{0}".format(
@@ -398,9 +393,10 @@ class Registry:
             self.last_error = None
             image_age = json.loads(response.text)
             return image_age['created']
-        print(" blob not found: {0}".format(self.last_error))
-        self.last_error = response.status_code
-        return []
+        else:
+            print(" blob not found: {0}".format(self.last_error))
+            self.last_error = response.status_code
+            return []
 
 
 def parse_args(args=None):
@@ -616,24 +612,24 @@ def delete_tags(
 # registry.delete_tag_layer(image_name, layer_digest, dry_run)
 
 
-def get_tags_like(args_tags_like, tags_list, plain):
+def get_tags_like(args_tags_like, tags_list):
     result = set()
     for tag_like in args_tags_like:
-        if not plain:
+        if not args.plain:
             print("tag like: {0}".format(tag_like))
         for tag in tags_list:
             if re.search(tag_like, tag):
-                if not plain:
+                if not args.plain:
                     print("Adding {0} to tags list".format(tag))
                 result.add(tag)
     return result
 
 
-def get_tags(all_tags_list, image_name, tags_like, plain):
+def get_tags(all_tags_list, image_name, tags_like):
     # check if there are args for special tags
     result = set()
     if tags_like:
-        result = get_tags_like(tags_like, all_tags_list, plain)
+        result = get_tags_like(tags_like, all_tags_list)
     else:
         result.update(all_tags_list)
 
@@ -685,8 +681,10 @@ def get_newer_tags(registry, image_name, hours, tags_list):
             print("Keeping tag: {0} timestamp: {1}".format(
                 tag, image_age))
             return tag
-        print("Will delete tag: {0} timestamp: {1}".format(tag, image_age))
-        return None
+        else:
+            print("Will delete tag: {0} timestamp: {1}".format(
+                tag, image_age))
+            return None
 
     print('---------------------------------')
     p = ThreadPool(4)
@@ -696,7 +694,7 @@ def get_newer_tags(registry, image_name, hours, tags_list):
     return result
 
 
-def get_datetime_tags(registry, image_name, tags_list, plain):
+def get_datetime_tags(registry, image_name, tags_list):
     def newer(tag):
         image_config = registry.get_tag_config(image_name, tag)
         if image_config == []:
@@ -711,7 +709,7 @@ def get_datetime_tags(registry, image_name, tags_list, plain):
             "datetime": parse(image_age).astimezone(tzutc())
         }
 
-    if not plain:
+    if not args.plain:
         print('---------------------------------')
     p = ThreadPool(4)
     result = list(x for x in p.map(newer, tags_list) if x)
@@ -812,7 +810,7 @@ def main_loop(args):
         if args.order_by_date:
             tags_list = get_ordered_tags(registry, image_name, all_tags_list, args.order_by_date)
         else:
-            tags_list = get_tags(all_tags_list, image_name, args.tags_like, args.plain)
+            tags_list = get_tags(all_tags_list, image_name, args.tags_like)
 
         # print(tags and optionally layers
         for tag in tags_list:
