@@ -8,7 +8,7 @@ This ansible role is used to synchronize docker image from publics registries an
 <br />
 Authentification is supported.
 <br />
-It use an external tools, already included (in `files/`) with this role : https://github.com/andrey-pohilko/registry-cli
+It use an external tools "skopeo", installed by this role : https://github.com/containers/skopeo
 
 ## REQUIREMENTS
 
@@ -70,9 +70,7 @@ Defaults variables defined in `defaults/main.yml`
 
 ## external tools necessary for manage registry from cli
 ## this role cannot be used without
-## https://github.com/andrey-pohilko/registry-cli#garbage-collection-in-docker-registry
-docker_registry_cli_install: true
-docker_registry_cli_path: /opt/registry_cli
+docker_registry_skopeo_install: true
 
 
 docker_default_remote_registry_auth: true
@@ -123,11 +121,6 @@ docker_images_list:
     tags_absent: ["9.1.6","9.1.7","9.1.8"]
     tags_present: ["9.2.0","9.2.1"]
 
-
-docker_python_module:
-  - jmespath
-  - jsondiff
-  - docker
 ```
 
 
@@ -139,4 +132,4 @@ Dany GINHOUX - https://github.com/dginhoux
 
 MIT
 <br />
-Refer to https://github.com/andrey-pohilko/registry-cli for registry-cli license
+Refer to https://github.com/containers/skopeo for skopeo license

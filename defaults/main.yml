@@ -2,18 +2,7 @@
 
 ## external tools necessary for manage registry from cli
 ## this role cannot be used without
-## https://github.com/andrey-pohilko/registry-cli#garbage-collection-in-docker-registry
-docker_registry_cli_install: true
-docker_registry_cli_path: /opt/registry_cli
-docker_registry_cli_interpreter_python: "{{ ansible_python_interpreter }}"
-docker_registry_cli_pip_modules_list:
-  - certifi
-  - chardet
-  - idna
-  - python-dateutil
-  - requests
-  - urllib3
-  - www-authenticate
+docker_registry_skopeo_install: true
 
 
 docker_default_remote_registry_auth: true

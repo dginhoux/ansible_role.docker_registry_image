@@ -1,29 +1,4 @@
 ---
-# - name: "- {{ image.name }} - get tags already present in local cache registry"
-#   ansible.builtin.uri:
-#     url: "{{ image.cache_registry_scheme | default(docker_default_cache_registry_scheme) }}://{{ image.cache_registry_url | default(docker_default_cache_registry_url) }}/v2/{{ image.name }}/tags/list"
-#     return_content: true
-#     timeout: 3
-#     method: GET
-#     validate_certs: false
-#     status_code: [200, 404]
-#     use_proxy: false
-#   register: registry_query
-#   ignore_errors: true
-#   changed_when: >
-#     registry_query is defined
-#     and
-#     registry_query.content != ""
-
-# - name: "- {{ image.name }} - get tags already present in local cache registry"
-#   ansible.builtin.command:
-#     cmd: /usr/bin/python3 /opt/registry_cli/registry.py --help
-#   register: registry_query
-#   # ignore_errors: true
-#   # changed_when: >
-#   #   registry_query is defined
-#   #   and
-#   #   registry_query.content != ""
 
 - name: "Get tags already present in local cache registry : {{ image.name }}"
   changed_when:
@@ -32,7 +7,9 @@
   register: registry_query
   ignore_errors: true
   ansible.builtin.command:
-    cmd: "{{ docker_registry_cli_interpreter_python }} {{ docker_registry_cli_path }}/registry.py --host {{ image.cache_registry_scheme | default(docker_default_cache_registry_scheme) }}://{{ image.cache_registry_url | default(docker_default_cache_registry_url) }} --no-validate-ssl --plain --image {{ image.name }}"
+    cmd: >-
+      skopeo list-tags --tls-verify=false --no-creds 
+      docker://{{ image.cache_registry_url | default(docker_default_cache_registry_url) }}/{{ image.name }}
 
 - name: "List tags already present in local cache registry : {{ image.name }}"
   when:

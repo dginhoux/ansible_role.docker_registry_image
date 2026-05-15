@@ -17,13 +17,13 @@
       image.tags_present | length > 0
     )
   block:
-    - name: "Include tasks for local cache registry query : {{ image.name }}"
-      ansible.builtin.include_tasks:
-        file: "tasks/sub-tasks/local_cache_registry_query.yml"
-
     - name: "Include tasks for local cache registry login : {{ image.name }}"
       ansible.builtin.include_tasks:
         file: "tasks/sub-tasks/local_cache_registry_login.yml"
+
+    - name: "Include tasks for local cache registry query : {{ image.name }}"
+      ansible.builtin.include_tasks:
+        file: "tasks/sub-tasks/local_cache_registry_query.yml"
 
     - name: "Find if remote registry login is needed and create flag : {{ image.name }}"
       when:

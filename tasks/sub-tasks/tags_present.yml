@@ -1,44 +1,25 @@
 ---
+- name: Split image.name into namespace and image
+  ansible.builtin.set_fact:
+    dest_repo: ""
 
-## {% if image.remote_registry_url is defined %}{{ image.remote_registry_url }}/{% endif %}
-# {% if  docker_default_retag_keep_remote_registry_name  and  image.retag_keep_remote_registry_name %}
-# {{ image.remote_registry_url | default(docker_default_remote_registry_url) }}/
-# {% elif  not docker_default_retag_keep_remote_registry_name  and  image.retag_keep_remote_registry_name %}
-# {{ image.remote_registry_url | default(docker_default_remote_registry_url) }}/
-# {% endif %}
+- name: Split image.name into namespace and image
+  ansible.builtin.set_fact:
+    dest_repo: "{{ image.name.split('/')[0] }}"
+    # image: "{{ image.name.split('/')[1] }}"
+  when: "'/' in image.name"
 
-- name: "Pull from external registry : {{ image.name }}:{{ tag }}"
-  register: pull_result
+
+- name: "Sync to local registry : {{ image.name }}:{{ tag }}"
+  ansible.builtin.command:
+    cmd: >-
+      skopeo sync 
+      --src-tls-verify=false --dest-tls-verify=false 
+      --src docker --dest docker 
+      {{ image.remote_registry_url | default(docker_default_remote_registry_url) }}/{{ image.name }}:{{ tag | string }} 
+      {{ image.cache_registry_url | default(docker_default_cache_registry_url) }}/{{ dest_repo }}
+  register: resadd
   ignore_errors: true
-  community.docker.docker_image:
-    name: "{{ image.remote_registry_url | default(docker_default_remote_registry_url) }}/{{ image.name }}:{{ tag | string }}"
-    source: pull
-    # pull:
-    #   platform: linux/amd64
 
-- name: "Retag and push in local cache registry : {{ image.name }}:{{ tag }}"
-  when:
-    - pull_result.failed is defined
-    - not pull_result.failed
-  register: retag_result
-  ignore_errors: true
-  community.docker.docker_image:
-    name: "{{ image.remote_registry_url | default(docker_default_remote_registry_url) }}/{{ image.name }}"
-    repository: "{{ image.cache_registry_url | default(docker_default_cache_registry_url) }}/{{ image.name }}:{{ tag | string }}"
-    tag: "{{ tag | string }}"
-    push: true
-    source: local
-
-- name: "Prune on local docker node : {{ image.name }}:{{ tag }}"
-  when:
-    - retag_result.failed is defined
-    - not retag_result.failed
-  with_items:
-    - "{{ image.name }}"
-    - "{{ image.remote_registry_url | default(docker_default_remote_registry_url) }}/{{ image.name }}"
-    - "{{ image.cache_registry_url | default(docker_default_cache_registry_url) }}/{{ image.name }}"
-  ignore_errors: true
-  community.docker.docker_image:
-    state: absent
-    name: "{{ item }}"
-    tag: "{{ tag }}"
+- ansible.builtin.debug:
+    var: resadd

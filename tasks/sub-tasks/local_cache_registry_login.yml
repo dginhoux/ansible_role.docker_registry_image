@@ -10,7 +10,7 @@
     )
   ansible.builtin.command:
     cmd: >-
-      docker login
-      --username "{{ image.cache_registry_login | default(docker_default_cache_registry_login) }}"
-      --password "{{ image.cache_registry_password | default(docker_default_cache_registry_password) }}"
+      skopeo login --tls-verify=false 
+      -u {{ image.cache_registry_login | default(docker_default_cache_registry_login) }} 
+      -p {{ image.cache_registry_password | default(docker_default_cache_registry_password) }} 
       {{ image.cache_registry_url | default(docker_default_cache_registry_url) }}

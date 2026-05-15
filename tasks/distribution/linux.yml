@@ -1,21 +1,22 @@
 ---
 
-- name: Install required python modules
-  tags:
-    - install
-  loop: "{{ docker_python_module | flatten }}"
-  ansible.builtin.pip:
-    name: "{{ item }}"
-    state: present
-    break_system_packages: True
+# - name: Install required python modules
+#   tags:
+#     - install
+#   loop: "{{ docker_python_module | flatten }}"
+#   ansible.builtin.pip:
+#     name: "{{ item }}"
+#     state: present
+#     break_system_packages: True
 
-- name: "Include tasks for install registry-cli"
+- name: "Install skopeo"
   tags:
     - install
   when:
-    - docker_registry_cli_install | bool
-  ansible.builtin.include_tasks:
-    file: "tasks/sub-tasks/registry_cli_install.yml"
+    - docker_registry_skopeo_install | bool
+  ansible.builtin.package:
+    name: skopeo
+    state: present
 
 - name: Include tasks for image management
   tags:
