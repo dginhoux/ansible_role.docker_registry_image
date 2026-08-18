@@ -52,7 +52,7 @@
     - name: "Include tasks for remove tags marked as absent : {{ image.name }}"
       when:
         - registry_query is defined
-        - not registry_query.failed
+        # - not registry_query.failed
         - tag in registry_query.stdout
         - image.tags_absent is defined
         - image.tags_absent is iterable
@@ -66,7 +66,7 @@
     - name: "Include tasks for add tags marked as present : {{ image.name }}"
       when:
         - registry_query is defined
-        - not registry_query.failed
+        # - not registry_query.failed
         - tag not in registry_query.stdout
         - image.tags_present is defined
         - image.tags_present is iterable

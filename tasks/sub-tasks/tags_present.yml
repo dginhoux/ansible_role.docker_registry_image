@@ -21,5 +21,5 @@
   register: resadd
   ignore_errors: true
 
-- ansible.builtin.debug:
-    var: resadd
+# - ansible.builtin.debug:
+#     var: resadd
